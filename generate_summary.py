@@ -488,10 +488,16 @@ def generateStreetsfiles():
                         name_norm = normalize(name)
                         voie = getTypeVoie(name)
                         if voie != '':
-                            name_norm = name_norm.replace(voie,'',1).strip()
+                            tmp_name_norm = name_norm.replace(voie,'',1).strip()
 
-                        if name_norm.find(' ')>=0:
-                            last_word = name_norm.split()[-1]
+                            # check if type voie is a real street name
+                            if len(tmp_name_norm) != 0:
+                                name_norm = tmp_name_norm
+                            else:
+                                #type voie is a real street name
+                                voie = ""
+
+                        last_word = name_norm.split()[-1]
                         dstreets[name] = {
                             'voie': voie,
                             'name': name,
