@@ -370,23 +370,25 @@ def populateVillesList(ddpartements):
             area_id=3600000000+int(did)
             ville_nodes = api.get(
                 f'area({area_id}) -> .departement;(node(area.departement)[place=city]; node(area.departement)[place=town];node(area.departement)[place=village];);',
-                responseformat='csv(::"id","ref:INSEE","name","name_norm","population","source:population";false)'
+                responseformat='csv(::"id",::"lat",::"lon","ref:INSEE","name","name_norm","population","source:population";false)'
             )
 
             # Get cities relation for border city
             ville_relations = api.get(
                 f'area({area_id}) -> .departement;(node(area.departement)[place=city]; node(area.departement)[place=town];node(area.departement)[place=village];);rel(bn:"admin_centre");',
-                responseformat='csv(::"id","ref:INSEE","name","name_norm","population","source:population";false)'
+                responseformat='csv(::"id",::"lat",::"lon","ref:INSEE","name","name_norm","population","source:population";false)'
             )
 
             # Parse Nodes
             for ville in ville_nodes:
-                ville_node,insee,name,name_norm,population,source_population = ville
+                ville_node,lat,lon,insee,name,name_norm,population,source_population = ville
 
                 name_norm = normalize(name)
                 if insee != "":
                     ddpartements[dinsee]['villes'][insee] = {
                         'ville_node': ville_node,
+                        'lat': lat,
+                        'lon': lon,
                         'ville_relation':-1,
                         'name': name,
                         'name_norm': name_norm ,
@@ -402,7 +404,7 @@ def populateVillesList(ddpartements):
 
             # Parse Relations
             for ville in ville_relations:
-                ville_relation,vinsee,vname,vname_norm,population,source_population = ville
+                ville_relation,lat,lon, vinsee,vname,vname_norm,population,source_population = ville
 
                 vname_norm = normalize(vname)
                 if vinsee != "":
@@ -422,25 +424,7 @@ def writeAllVillesOnFile(ddpartements):
 
     filename = f'{DATAS_DIR}/villes.csv'
     with open(f"{filename}",'w') as allvilles:
-        allvilles.write("dep_relation;dep_insee;ville_relation;ville_node;ville_insee;name;name_norm;population;source_population\n")
-
-        for dep_insee in ddpartements:
-            dep_relation = ddpartements[dep_insee]['id']
-
-            for ville_insee in ddpartements[dep_insee]['villes']:
-                ville_node = ddpartements[dep_insee]['villes'][ville_insee]['id_node']
-                ville_relation = ddpartements[dep_insee]['villes'][ville_insee]['id_relation']
-                name = ddpartements[dep_insee]['villes'][ville_insee]['name']
-                name_norm = ddpartements[dep_insee]['villes'][ville_insee]['name_norm']
-                population = ddpartements[dep_insee]['villes'][ville_insee]['population']
-                source_population = ddpartements[dep_insee]['villes'][ville_insee]['source_population']
-                allvilles.write(f"{dep_relation};{dep_insee};{ville_relation};{ville_node};{ville_insee};{name};{name_norm};{population};{source_population}\n")
-
-    
-def writeAllVillesOnFile(ddpartements):
-    os.makedirs(DATAS_DIR,exist_ok=True)
-    with open(f'{DATAS_DIR}/villes.csv','w') as allvilles:
-        allvilles.write("dep_relation;dep_insee;ville_relation;ville_node;ville_insee;name;name_norm;population;source_population\n")
+        allvilles.write("dep_relation;dep_insee;ville_relation;ville_node;ville_insee;lat;lon;name;name_norm;population;source_population\n")
 
         for dep_insee in ddpartements:
             dep_relation = ddpartements[dep_insee]['id']
@@ -448,12 +432,15 @@ def writeAllVillesOnFile(ddpartements):
             for ville_insee in ddpartements[dep_insee]['villes']:
                 ville_node = ddpartements[dep_insee]['villes'][ville_insee]['ville_node']
                 ville_relation = ddpartements[dep_insee]['villes'][ville_insee]['ville_relation']
+                lat = ddpartements[dep_insee]['villes'][ville_insee]['lat']
+                lon = ddpartements[dep_insee]['villes'][ville_insee]['lon']
                 name = ddpartements[dep_insee]['villes'][ville_insee]['name']
                 name_norm = ddpartements[dep_insee]['villes'][ville_insee]['name_norm']
                 population = ddpartements[dep_insee]['villes'][ville_insee]['population']
                 source_population = ddpartements[dep_insee]['villes'][ville_insee]['source_population']
-                allvilles.write(f"{dep_relation};{dep_insee};{ville_relation};{ville_node};{ville_insee};{name};{name_norm};{population};{source_population}\n")
+                allvilles.write(f"{dep_relation};{dep_insee};{ville_relation};{ville_node};{ville_insee};{lat};{lon};{name};{name_norm};{population};{source_population}\n")
 
+    
 def generateStreetsfiles():
     print("Generate streets files ...")
     for dinsee in ddpartements:
